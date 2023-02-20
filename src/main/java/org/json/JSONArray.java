@@ -68,6 +68,15 @@ public class JSONArray implements Iterable<Object> {
      */
     private final ArrayList<Object> myArrayList;
 
+    public static JSONArray parse(String json) {
+        try {
+            return new JSONArray(json);
+        }
+        catch(Exception e) {
+            return null;
+        }
+    }
+
     /**
      * Construct an empty JSONArray.
      */
@@ -1365,10 +1374,6 @@ public class JSONArray implements Iterable<Object> {
             } else if (valueThis instanceof Number && valueOther instanceof Number) {
                 if (!JSONObject.isNumberSimilar((Number)valueThis, (Number)valueOther)) {
                 	return false;
-                }
-            } else if (valueThis instanceof JSONString && valueOther instanceof JSONString) {
-                if (!((JSONString) valueThis).toJSONString().equals(((JSONString) valueOther).toJSONString())) {
-                    return false;
                 }
             } else if (!valueThis.equals(valueOther)) {
                 return false;

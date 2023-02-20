@@ -145,10 +145,6 @@ public class JSONObject {
      */
     private final Map<String, Object> map;
 
-    public Class<? extends Map> getMapType() {
-        return map.getClass();
-    }
-
     /**
      * It is sometimes more convenient and less ambiguous to have a
      * <code>NULL</code> object than to use Java's <code>null</code> value.
@@ -156,6 +152,16 @@ public class JSONObject {
      * <code>JSONObject.NULL.toString()</code> returns <code>"null"</code>.
      */
     public static final Object NULL = new Null();
+
+    public static JSONObject parse(String json) {
+        try {
+            return new JSONObject(json);
+        }
+        catch(Exception e) {
+            return null;
+        }
+    }
+    
 
     /**
      * Construct an empty JSONObject.
@@ -1041,6 +1047,51 @@ public class JSONObject {
      */
     public Object opt(String key) {
         return key == null ? null : this.map.get(key);
+    }
+
+    public Object optPath(String path) {
+        if(path == null)
+            return null;
+        String[] parts = path.split(Pattern.quote("."));
+        Object o = null;
+        JSONObject root = this;
+        for( int i=0; i<parts.length; i++ ) {
+            o = root.map.get(parts[i]);
+            if(o == null)
+                return null;
+            if(o instanceof JSONObject)
+                root = (JSONObject) o;
+            else if(o instanceof JSONArray && i+1 < parts.length && parts[i+1].equals("_ARRAY_")) {
+                i++;
+                JSONArray arr = (JSONArray) o;
+                for( int j=0; j<arr.length(); j++ ) {
+                    o = arr.get(j);
+                    if(o == null)
+                        continue;
+                    if(o instanceof JSONObject) {
+                        root = (JSONObject) o;
+                        break;
+                    }
+                    else if(i+1 < parts.length)
+                        return null;
+                }
+                if(i+1 < parts.length)
+                    return null;
+            }
+            else if(i+1 < parts.length)
+                return null;
+        }
+        return o;
+    }
+
+    public String optStringPath(String path, String defaultValue) {
+        Object object = this.optPath(path);
+        return NULL.equals(object) ? defaultValue : object.toString();
+    }
+
+    public String optStringPath(String path) {
+        Object object = this.optPath(path);
+        return NULL.equals(object) ? null : object.toString();
     }
 
     /**
@@ -2123,10 +2174,6 @@ public class JSONObject {
                     }
                 } else if (valueThis instanceof Number && valueOther instanceof Number) {
                     if (!isNumberSimilar((Number)valueThis, (Number)valueOther)) {
-                    	return false;
-                    }
-                } else if (valueThis instanceof JSONString && valueOther instanceof JSONString) {
-                    if (!((JSONString) valueThis).toJSONString().equals(((JSONString) valueOther).toJSONString())) {
                     	return false;
                     }
                 } else if (!valueThis.equals(valueOther)) {

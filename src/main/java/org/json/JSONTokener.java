@@ -324,7 +324,25 @@ public class JSONTokener {
                     break;
                 case 'u':
                     try {
-                        sb.append((char)Integer.parseInt(this.next(4), 16));
+                        String value = "";
+                        for( int i=0; i<4; i++ ) {
+                            char ch = this.next();
+                            if((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))
+                                value += ch;
+                            else {
+                                this.back();
+                                break;
+                            }
+                        }
+                        if(value.length() == 4) {
+                            sb.append((char)Integer.parseInt(value, 16));
+                        }
+                        else {
+                            sb.append('\\');
+                            sb.append('\\');
+                            sb.append('u');
+                            sb.append(value);
+                        }
                     } catch (NumberFormatException e) {
                         throw this.syntaxError("Illegal escape.", e);
                     }
@@ -336,7 +354,9 @@ public class JSONTokener {
                     sb.append(c);
                     break;
                 default:
-                    throw this.syntaxError("Illegal escape.");
+                    sb.append('\\');
+                    sb.append('\\');
+                    break;
                 }
                 break;
             default:
